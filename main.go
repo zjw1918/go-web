@@ -50,7 +50,7 @@ func loginPost(c *gin.Context) {
 	//session.Values["authed"] = false
 	//session.Save(c.Request, c.Writer)
 
-	//c.Redirect(http.StatusOK, "login")
+	c.Redirect(http.StatusTemporaryRedirect, "/index")
 }
 
 func logout(c *gin.Context) {
