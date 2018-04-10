@@ -11,17 +11,19 @@ import (
 	"github.com/zjw1918/go-web/myconst"
 	"github.com/zjw1918/go-web/db"
 	"github.com/zjw1918/go-web/controllers"
+
 	"github.com/zjw1918/go-web/model"
 )
 
 
+
 func index(c *gin.Context)  {
-	user := model.User{Username:"jim", Email:"a@a.com"}
+	//user := model.User{Username:"jim", Email:"a@a.com"}
 
 	c.HTML(http.StatusOK, "index.tmpl", gin.H{
 		"title"	: "Mode",
 		"time"	: time.Now().Format(time.RFC3339),
-		"user" 	: &user,
+		//"user" 	: &user,
 	})
 }
 
@@ -29,6 +31,9 @@ func main() {
 	fmt.Println("hello")
 
 	db.Init()
+
+	// Migrate the schema
+	db.GetDB().AutoMigrate(&model.User{})
 	defer db.GetDB().Close()
 
 	r := gin.Default()
@@ -43,11 +48,13 @@ func main() {
 		authorized.GET("/", index)
 	}
 
-	r.GET("/Signin", controllers.SigninGet)
-	r.POST("/Signin", controllers.SigninPost)
-	r.GET("/signup", controllers.SignupGet)
-	r.POST("/signup", controllers.SignupPost)
-	r.GET("/logout", controllers.Logout)
+	user := new(controllers.UserController)
+
+	r.GET("/Signin", user.SigninGet)
+	r.POST("/Signin", user.SigninPost)
+	r.GET("/signup", user.SignupGet)
+	r.POST("/signup", user.SignupPost)
+	r.GET("/logout", user.Signout)
 
 	r.NoRoute(func(c *gin.Context) {
 		c.HTML(http.StatusNotFound, "404.tmpl", nil)
@@ -58,14 +65,14 @@ func main() {
 
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		session := sessions.Default(c)
-		if auth, ok := session.Get(myconst.IsAuthed).(bool); !auth || !ok {
-			//c.JSON(http.StatusForbidden, gin.H{
-			//	"message": "not authed",
-			//})
-			c.Redirect(http.StatusFound, "/Signin")
-			c.Abort()
-		}
+		//session := controllers.GetUserID(c)
+		//if session == 0 {
+		//	//c.JSON(http.StatusForbidden, gin.H{
+		//	//	"message": "not authed",
+		//	//})
+		//	c.Redirect(http.StatusFound, "/Signin")
+		//	c.Abort()
+		//}
 	}
 }
 

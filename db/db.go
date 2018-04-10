@@ -2,7 +2,6 @@ package db
 
 import (
 	"github.com/jinzhu/gorm"
-	. "github.com/zjw1918/go-web/model"
 	"log"
 )
 
@@ -17,9 +16,6 @@ func Init()  {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// Migrate the schema
-	db.AutoMigrate(&User{})
 }
 
 func GetDB() *gorm.DB {
