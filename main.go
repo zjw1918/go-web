@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"github.com/zjw1918/go-demo/model"
+	"github.com/zjw1918/go-web/model"
 	"time"
 
-	"github.com/zjw1918/go-demo/utils"
+	"github.com/zjw1918/go-web/utils"
 )
 
 const COOKIE_NAME = "cookie-name"
