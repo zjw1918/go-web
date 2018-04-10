@@ -3,81 +3,39 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/sessions"
+	"github.com/gin-contrib/sessions"
 	"net/http"
-	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"github.com/zjw1918/go-web/model"
 	"time"
 
-	"github.com/zjw1918/go-web/utils"
+	"github.com/zjw1918/go-web/myconst"
+	"github.com/zjw1918/go-web/db"
+	"github.com/zjw1918/go-web/controllers"
+	"github.com/zjw1918/go-web/model"
 )
 
-const COOKIE_NAME = "cookie-name"
-
-var (
-	// key must be 16, 24 or 32 bytes long (AES-128, AES-192 or AES-256)
-	key = []byte("super-secret-key")
-	store = sessions.NewCookieStore(key)
-	db *gorm.DB
-)
 
 func index(c *gin.Context)  {
-	user := model.User{Username:"zjw", Email:"a@a.com"}
+	user := model.User{Username:"jim", Email:"a@a.com"}
 
 	c.HTML(http.StatusOK, "index.tmpl", gin.H{
 		"title"	: "Mode",
 		"time"	: time.Now().Format(time.RFC3339),
-		"user" 	: user,
+		"user" 	: &user,
 	})
 }
 
-func loginGet(c *gin.Context) {
-	c.HTML(http.StatusOK, "login.tmpl", nil)
-}
-
-func loginPost(c *gin.Context) {
-	//session, _ := store.Get(c.Request, COOKIE_NAME)
-
-	username := c.PostForm("username")
-	password := c.PostForm("password")
-
-	fmt.Println(username + ", " + password)
-	hash, _ := utils.HashPassword(password)
-	fmt.Println(utils.CheckPasswordHash("111", hash))
-
-
-	//session.Values["authed"] = false
-	//session.Save(c.Request, c.Writer)
-
-	c.Redirect(http.StatusTemporaryRedirect, "/index")
-}
-
-func logout(c *gin.Context) {
-	session, _ := store.Get(c.Request, COOKIE_NAME)
-
-	session.Values["authed"] = false
-	session.Save(c.Request, c.Writer)
-}
-
 func main() {
-	var err error
 	fmt.Println("hello")
 
-	db, err = gorm.Open("sqlite3", "test.db")
-
-	if err != nil {
-		panic("failed to connect database")
-	}
-	defer db.Close()
-
-	// Migrate the schema
-	db.AutoMigrate(&model.User{})
-
-	//db.Create(&Student{Name:"Tom", Age: 19, Address: "莲花路1978号"})
+	db.Init()
+	defer db.GetDB().Close()
 
 	r := gin.Default()
-	r.LoadHTMLGlob("templates/*")
+	store := sessions.NewCookieStore([]byte(myconst.SessionKey))
+	r.Use(sessions.Sessions(myconst.CookieName, store))
+	r.LoadHTMLGlob("./public/templates/*")
+	r.Static("/public", "./public")
 
 	authorized := r.Group("/")
 	authorized.Use(AuthRequired())
@@ -85,20 +43,27 @@ func main() {
 		authorized.GET("/", index)
 	}
 
-	r.GET("/login", loginGet)
-	r.POST("/login", loginPost)
-	r.GET("/logout", logout)
+	r.GET("/Signin", controllers.SigninGet)
+	r.POST("/Signin", controllers.SigninPost)
+	r.GET("/signup", controllers.SignupGet)
+	r.POST("/signup", controllers.SignupPost)
+	r.GET("/logout", controllers.Logout)
+
+	r.NoRoute(func(c *gin.Context) {
+		c.HTML(http.StatusNotFound, "404.tmpl", nil)
+	})
 
 	r.Run()
 }
 
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		session, _ := store.Get(c.Request, COOKIE_NAME)
-		if auth, ok := session.Values["authed"].(bool); !auth || !ok {
-			c.JSON(http.StatusForbidden, gin.H{
-				"message": "not authed",
-			})
+		session := sessions.Default(c)
+		if auth, ok := session.Get(myconst.IsAuthed).(bool); !auth || !ok {
+			//c.JSON(http.StatusForbidden, gin.H{
+			//	"message": "not authed",
+			//})
+			c.Redirect(http.StatusFound, "/Signin")
 			c.Abort()
 		}
 	}

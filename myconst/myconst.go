@@ -1,3 +1,7 @@
 package myconst
 
-const COOKIE_NAME = "cookie-name"
+const (
+	SessionKey = "super-secret-key"
+	CookieName = "cookie-name"
+	IsAuthed   = "isAuthed"
+)
