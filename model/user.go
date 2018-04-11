@@ -12,7 +12,7 @@ import (
 type User struct {
 	gorm.Model
 	Username string `gorm:"unique;not null" json:"username"`
-	Password string
+	Password string	`json:"-"`
 	Email string	`gorm:"type:varchar(100);unique_index" json:"email"`
 }
 
@@ -34,7 +34,17 @@ func (m UserModel) Signup(form forms.SignupForm) (user User, err error) {
 	}
 
 	if len(users) > 0 {
-		return user, errors.New("user already exists")
+		return user, errors.New("user or email already exists")
+	}
+
+	err = db.GetDB().First(&users, "email = ?", form.Email).Error
+	log.Println(users)
+	if err != nil {
+		return user, nil
+	}
+
+	if len(users) > 0 {
+		return user, errors.New("user or email already exists")
 	}
 
 	hash, _ := utils.HashPassword(form.Password)
@@ -52,7 +62,7 @@ func (m UserModel) Signup(form forms.SignupForm) (user User, err error) {
 
 func (m UserModel) Signin(form forms.SigninForm) (user User, err error) {
 	var users []User
-	err = db.GetDB().First(&users, form.Username).Error
+	err = db.GetDB().First(&users, "username = ?", form.Username).Error
 
 	log.Println(users)
 	if err != nil {
@@ -63,6 +73,11 @@ func (m UserModel) Signin(form forms.SigninForm) (user User, err error) {
 		return user, errors.New("username or password wrong")
 	}
 	return users[0], err
+}
+
+func (m UserModel) All() (users []User, err error) {
+	err = db.GetDB().Find(&users).Error
+	return users, err
 }
 
 

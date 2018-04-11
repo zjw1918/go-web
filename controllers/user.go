@@ -42,7 +42,7 @@ func (ctrl UserController) SigninGet(c *gin.Context) {
 func (ctrl UserController) SigninPost(c *gin.Context) {
 	var signinForm forms.SigninForm
 
-	if c.BindJSON(&signinForm) != nil {
+	if c.Bind(&signinForm) != nil {
 		c.HTML(http.StatusNotAcceptable, "signin.tmpl", gin.H{
 			"message": "invalid form info",
 		})
@@ -74,8 +74,8 @@ func (ctrl UserController) SignupGet(c *gin.Context)  {
 func (ctrl UserController) SignupPost(c *gin.Context)  {
 	var signupForm forms.SignupForm
 
-	if c.BindJSON(&signupForm) != nil {
-		c.HTML(http.StatusNotAcceptable, "signin.tmpl", gin.H{
+	if c.Bind(&signupForm) != nil {
+		c.HTML(http.StatusNotAcceptable, "signup.tmpl", gin.H{
 			"message": "invalid form info",
 		})
 		return
@@ -83,7 +83,7 @@ func (ctrl UserController) SignupPost(c *gin.Context)  {
 
 	user, err := userModel.Signup(signupForm)
 	if err != nil {
-		c.HTML(http.StatusNotAcceptable, "signin.tmpl", gin.H{
+		c.HTML(http.StatusNotAcceptable, "signup.tmpl", gin.H{
 			"message": err.Error(),
 		})
 		return
@@ -114,5 +114,13 @@ func updateSession(c *gin.Context, flag bool)  {
 	session.Save()
 }
 
-
+// find all users
+func (ctrl UserController) GetAllUsers(c *gin.Context)  {
+	users, err := userModel.All()
+	if err != nil {
+		c.JSON(http.StatusAccepted, gin.H{"error": err.Error()})
+	} else {
+		c.JSON(http.StatusOK, gin.H{"users": users})
+	}
+}
 

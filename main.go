@@ -16,14 +16,13 @@ import (
 )
 
 
-
 func index(c *gin.Context)  {
-	//user := model.User{Username:"jim", Email:"a@a.com"}
+	userInfo := controllers.GetSessionUserInfo(c)
 
 	c.HTML(http.StatusOK, "index.tmpl", gin.H{
 		"title"	: "Mode",
 		"time"	: time.Now().Format(time.RFC3339),
-		//"user" 	: &user,
+		"user"	: userInfo,
 	})
 }
 
@@ -42,19 +41,19 @@ func main() {
 	r.LoadHTMLGlob("./public/templates/*")
 	r.Static("/public", "./public")
 
+	user := new(controllers.UserController)
 	authorized := r.Group("/")
 	authorized.Use(AuthRequired())
 	{
 		authorized.GET("/", index)
+		authorized.GET("/users", user.GetAllUsers)
 	}
 
-	user := new(controllers.UserController)
-
-	r.GET("/Signin", user.SigninGet)
-	r.POST("/Signin", user.SigninPost)
+	r.GET("/signin", user.SigninGet)
+	r.POST("/signin", user.SigninPost)
 	r.GET("/signup", user.SignupGet)
 	r.POST("/signup", user.SignupPost)
-	r.GET("/logout", user.Signout)
+	r.GET("/signout", user.Signout)
 
 	r.NoRoute(func(c *gin.Context) {
 		c.HTML(http.StatusNotFound, "404.tmpl", nil)
@@ -65,15 +64,13 @@ func main() {
 
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//session := controllers.GetUserID(c)
-		//if session == 0 {
-		//	//c.JSON(http.StatusForbidden, gin.H{
-		//	//	"message": "not authed",
-		//	//})
-		//	c.Redirect(http.StatusFound, "/Signin")
-		//	c.Abort()
-		//}
+		session := controllers.GetUserID(c)
+		if session == 0 {
+			//c.JSON(http.StatusForbidden, gin.H{
+			//	"message": "not authed",
+			//})
+			c.Redirect(http.StatusFound, "/signin")
+			c.Abort()
+		}
 	}
 }
-
-

@@ -9,9 +9,14 @@
 <body>
     <h1>Login</h1>
 
+    <a href="/">home</a>
+    <a href="/signin">signin</a>
+    <a href="/signout">logout</a>
+    <a href="/signup">signup</a>
+
     <p>{{.message}}</p>
 
-    <form action="/login" method="post">
+    <form action="/signin" method="post">
         <label for="username">Username:</label>
         <input type="text" name="username" id="username" placeholder="Username" required> <br>
 
